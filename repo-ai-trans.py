@@ -1,5 +1,6 @@
 import os
 import requests
+import shutil
 from bs4 import BeautifulSoup
 
 from openai import OpenAI
@@ -37,11 +38,20 @@ def replace_links(text, target_language):
 
     return re.sub(r'(\[.*?\]\()(/zh/.*?)(\))', replacer, text)
 
+def copy_images(text, original_path, target_path):
+    matches = re.findall(r'!\[.*?\]\((.*?)\)', text)
+    for match in matches:
+        original_image_path = os.path.join(os.path.dirname(original_path), match)
+        target_image_path = os.path.join(os.path.dirname(target_path), match)
+        os.makedirs(os.path.dirname(target_image_path), exist_ok=True)
+        shutil.copyfile(original_image_path, target_image_path)
+
 def translate_file(original_path, target_path, target_language):
     with open(original_path, 'r', encoding='utf-8') as f:
         text = f.read()
     translated_text = translate_text(text, target_language)
     translated_text = replace_links(translated_text, target_language)
+    copy_images(translated_text, original_path, target_path)
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
     with open(target_path, 'w', encoding='utf-8') as f:
         f.write(translated_text)
