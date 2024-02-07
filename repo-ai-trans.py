@@ -18,20 +18,24 @@ def translate_text(text, target_language):
 
     return chat_completion.choices[0].message.content.strip()
 
+import re
+
 def replace_links(text, target_language):
-    soup = BeautifulSoup(text, 'html.parser')
-    for a in soup.find_all('a', href=True):
-        if '/zh/' in a['href']:
-            new_href = a['href'].replace('/zh/', '/' + target_language + '/')
-            if requests.get(new_href).status_code == 200:
-                a['href'] = new_href
+    def replacer(match):
+        url = match.group(2)
+        if '/zh/' in url:
+            new_url = url.replace('/zh/', '/' + target_language + '/')
+            if requests.get(new_url).status_code == 200:
+                return match.group(1) + new_url + match.group(3)
             else:
-                new_href = a['href'].replace('/zh/', '/en/')
-                if requests.get(new_href).status_code == 200:
-                    a['href'] = new_href
+                new_url = url.replace('/zh/', '/en/')
+                if requests.get(new_url).status_code == 200:
+                    return match.group(1) + new_url + match.group(3)
                 else:
-                    a['href'] = a['href'].replace('/zh/', '/')
-    return str(soup)
+                    return match.group(1) + url.replace('/zh/', '/') + match.group(3)
+        return match.group(0)
+
+    return re.sub(r'(\[.*?\]\()(/zh/.*?)(\))', replacer, text)
 
 def translate_file(original_path, target_path, target_language):
     with open(original_path, 'r', encoding='utf-8') as f:
