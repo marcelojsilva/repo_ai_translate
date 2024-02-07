@@ -2,10 +2,17 @@ import os
 import requests
 from bs4 import BeautifulSoup
 
+import openai
+
 def translate_text(text, target_language):
-    # This is a placeholder for the translation function.
-    # You will need to replace this with the actual code to use GPT-4 and Microsoft's Semantic Kernel.
-    return text
+    openai.api_key = os.getenv('OPENAI_API_KEY')
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=f"{text}\n\nTranslate the above text to {target_language}:",
+        temperature=0.5,
+        max_tokens=200
+    )
+    return response.choices[0].text.strip()
 
 def replace_links(text, target_language):
     soup = BeautifulSoup(text, 'html.parser')
