@@ -18,7 +18,15 @@ def replace_links(text, target_language):
     soup = BeautifulSoup(text, 'html.parser')
     for a in soup.find_all('a', href=True):
         if 'docs.soliditylang.org/zh/latest/' in a['href']:
-            a['href'] = a['href'].replace('zh', target_language)
+            new_href = a['href'].replace('zh', target_language)
+            if requests.get(new_href).status_code == 200:
+                a['href'] = new_href
+            else:
+                new_href = a['href'].replace('zh', 'en')
+                if requests.get(new_href).status_code == 200:
+                    a['href'] = new_href
+                else:
+                    a['href'] = a['href'].replace('/zh/', '/')
     return str(soup)
 
 def translate_file(original_path, target_path, target_language):
