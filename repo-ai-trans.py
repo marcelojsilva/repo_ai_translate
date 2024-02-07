@@ -2,17 +2,21 @@ import os
 import requests
 from bs4 import BeautifulSoup
 
-import openai
+from openai import OpenAI
 
 def translate_text(text, target_language):
-    openai.api_key = os.getenv('OPENAI_API_KEY')
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=f"{text}\n\nTranslate the above text to {target_language}:",
-        temperature=0.5,
-        max_tokens=200
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": f"{text}\n\nTranslate the above text to {target_language}:",
+            }
+        ],
+        model="gpt-3.5-turbo",
     )
-    return response.choices[0].text.strip()
+
+    return chat_completion.choices[0].message.content.strip()
 
 def replace_links(text, target_language):
     soup = BeautifulSoup(text, 'html.parser')
