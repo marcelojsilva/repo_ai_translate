@@ -17,12 +17,12 @@ def translate_text(text, target_language):
 def replace_links(text, target_language):
     soup = BeautifulSoup(text, 'html.parser')
     for a in soup.find_all('a', href=True):
-        if 'docs.soliditylang.org/zh/latest/' in a['href']:
-            new_href = a['href'].replace('zh', target_language)
+        if '/zh/' in a['href']:
+            new_href = a['href'].replace('/zh/', '/' + target_language + '/')
             if requests.get(new_href).status_code == 200:
                 a['href'] = new_href
             else:
-                new_href = a['href'].replace('zh', 'en')
+                new_href = a['href'].replace('/zh/', '/en/')
                 if requests.get(new_href).status_code == 200:
                     a['href'] = new_href
                 else:
@@ -39,7 +39,7 @@ def translate_file(original_path, target_path, target_language):
         f.write(translated_text)
 
 if __name__ == '__main__':
-    original_path = './blob/main/01_HelloWeb3/readme.md'
-    target_path = './blob/main/Languages/en/01_HelloWeb3_en/readme.md'
-    target_language = 'en'
+    original_path = '../WTF-Solidity/01_HelloWeb3/readme.md'
+    target_path = './WTF-Solidity/Languages/pt-br/01_HelloWeb3_pt-br/readme.md'
+    target_language = 'pt-br'
     translate_file(original_path, target_path, target_language)
