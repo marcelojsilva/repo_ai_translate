@@ -34,9 +34,10 @@ def replace_links(text, target_language):
                     return match.group(1) + new_url + match.group(3)
                 else:
                     return match.group(1) + url.replace('/zh/', '/') + match.group(3)
-        return match.group(0)
+        else:
+            return match.group(1) + url.replace('https://github.com/AmazingAng/WTFSolidity/blob/main', '.') + match.group(3)
 
-    return re.sub(r'(\[.*?\]\()(/zh/.*?)(\))', replacer, text)
+    return re.sub(r'(\[.*?\]\()(.*?)(\))', replacer, text)
 
 def copy_images(text, original_path, target_path):
     matches = re.findall(r'!\[.*?\]\((.*?)\)', text)
