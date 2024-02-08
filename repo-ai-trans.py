@@ -47,14 +47,15 @@ def copy_images(text, original_path, target_path):
         shutil.copyfile(original_image_path, target_image_path)
 
 def translate_file(md_file, original_path, target_path):
-    with open(original_path, 'r', encoding='utf-8') as f:
+    original_file_path = os.path.join(original_path, md_file)
+    target_file_path = os.path.join(target_path, md_file.replace('.md', '_' + target_language + '.md'))
+    with open(original_file_path, 'r', encoding='utf-8') as f:
         text = f.read()
     translated_text = translate_text(text, target_language)
     translated_text = replace_links(translated_text, target_language)
-    copy_images(translated_text, original_path, target_path)
-    target_path = os.path.join(target_path, os.path.basename(original_path).replace('.md', '_' + target_language + '.md'))
-    os.makedirs(os.path.dirname(target_path), exist_ok=True)
-    with open(target_path, 'w', encoding='utf-8') as f:
+    copy_images(translated_text, original_file_path, target_file_path)
+    os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
+    with open(target_file_path, 'w', encoding='utf-8') as f:
         f.write(translated_text)
 
 def copy_non_md_files(original_path, target_path):
