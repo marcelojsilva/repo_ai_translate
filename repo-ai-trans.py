@@ -69,6 +69,7 @@ def translate_file(md_file, original_path, target_path):
     os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
     with open(target_file_path, 'w', encoding='utf-8') as f:
         f.write(translated_text)
+        f.write("\n\n<!-- This file was translated using AI by repo_ai_translate. For more information, visit https://github.com/marcelojsilva/repo_ai_translate -->")
 
 def copy_non_md_files(original_path, target_path):
     files = glob.glob(os.path.join(original_path, '**/*'), recursive=True)
