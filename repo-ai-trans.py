@@ -46,7 +46,7 @@ def copy_images(text, original_path, target_path):
         os.makedirs(os.path.dirname(target_image_path), exist_ok=True)
         shutil.copyfile(original_image_path, target_image_path)
 
-def translate_file(original_path, target_path, target_language):
+def translate_file(original_path, target_path):
     with open(original_path, 'r', encoding='utf-8') as f:
         text = f.read()
     translated_text = translate_text(text, target_language)
@@ -66,7 +66,7 @@ def copy_non_md_files(original_path, target_path):
 if __name__ == '__main__':
     original_path = sys.argv[1]
     target_path = os.path.join(sys.argv[2], 'pt-br')
-    target_language = 'pt-br'
+    target_language = sys.argv[3]
     copy_non_md_files(original_path, target_path)
     md_files = glob.glob(os.path.join(original_path, '*.md'))
     for md_file in md_files:
