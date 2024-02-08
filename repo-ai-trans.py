@@ -38,8 +38,14 @@ def replace_links(text, target_language):
             # If the link without language exists, return it
             if requests.get(new_url).status_code == 200:
                 return match.group(1) + new_url + match.group(3)
-        # If the link is not in the original language, replace the repo name with '.'
-        return match.group(1) + url.replace(f'{os.getenv("REPO_NAME")}/blob/main', '.') + match.group(3)
+            else:
+                # If the link does not exist, return the original link
+                return match.group(1) + url + match.group(3)
+        # If the link is to a file in the repo, replace to relative path
+        if f'{os.getenv("REPO_NAME")}/blob/main' in url: 
+            return match.group(1) + url.replace(f'{os.getenv("REPO_NAME")}/blob/main', '.') + match.group(3)
+        else:
+            return match.group(1) + url + match.group(3)
 
     # Replace all links in the text
     return re.sub(r'(\[.*?\]\()(.*?)(\))', replacer, text)
@@ -68,7 +74,22 @@ def copy_non_md_files(original_path, target_path):
     files = glob.glob(os.path.join(original_path, '**/*'), recursive=True)
     for file in files:
         if not file.endswith('.md') and not os.path.isdir(file):
-            shutil.copy2(file, target_path)
+            # Get the relative path difference
+            rel_path = os.path.relpath(file, original_path)
+            # Create the same directory structure in the target path
+            target_file_path = os.path.join(target_path, rel_path)
+            os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
+            shutil.copy(file, target_file_path)
+
+def is_programming_file(filename):
+    # List of common programming language extensions
+    programming_extensions = ['.sol', '.py', '.js', '.java', '.c', '.cpp', '.cs', '.rb', '.go', '.php', '.swift', '.html', '.css', '.sql']
+
+    # Get the file extension
+    _, extension = os.path.splitext(filename)
+
+    # Check if the extension is in the list of programming extensions
+    return extension in programming_extensions
 
 if __name__ == '__main__':
     target_language = sys.argv[1]
