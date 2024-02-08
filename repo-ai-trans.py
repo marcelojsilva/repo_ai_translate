@@ -68,7 +68,7 @@ def copy_non_md_files(original_path, target_path):
     files = glob.glob(os.path.join(original_path, '**/*'), recursive=True)
     for file in files:
         if not file.endswith('.md') and not os.path.isdir(file):
-            shutil.copy(file, target_path)
+            shutil.copy2(file, target_path)
 
 if __name__ == '__main__':
     target_language = sys.argv[1]
