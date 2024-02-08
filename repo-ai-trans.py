@@ -26,17 +26,14 @@ def replace_links(text, target_language):
         url = match.group(2)
         # Check if the link is in the original language
         if f'/{original_language}/' in url:
-            # Try replacing the language in the link
             new_url = url.replace(f'/{original_language}/', f'/{target_language}/')
             # If the new link exists, return it
             if requests.get(new_url).status_code == 200:
                 return match.group(1) + new_url + match.group(3)
-            # If the new link doesn't exist, try replacing the language with 'en'
             new_url = url.replace(f'/{original_language}/', '/en/')
             # If the 'en' link exists, return it
             if requests.get(new_url).status_code == 200:
                 return match.group(1) + new_url + match.group(3)
-            # If the 'en' link doesn't exist, remove the language from the link
             new_url = url.replace(f'/{original_language}/', '/')
             # If the link without language exists, return it
             if requests.get(new_url).status_code == 200:
@@ -68,9 +65,9 @@ def translate_file(md_file, original_path, target_path):
         f.write(translated_text)
 
 def copy_non_md_files(original_path, target_path):
-    files = glob.glob(os.path.join(original_path, '*'))
+    files = glob.glob(os.path.join(original_path, '**/*'), recursive=True)
     for file in files:
-        if not file.endswith('.md'):
+        if not file.endswith('.md') and not os.path.isdir(file):
             shutil.copy(file, target_path)
 
 if __name__ == '__main__':
