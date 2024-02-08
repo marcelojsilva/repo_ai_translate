@@ -24,25 +24,27 @@ def translate_text(text, target_language):
 def replace_links(text, target_language):
     def replacer(match):
         url = match.group(2)
+        # Check if the link is in the original language
         if f'/{original_language}/' in url:
-            # Check if link exists in the target language
+            # Try replacing the language in the link
             new_url = url.replace(f'/{original_language}/', f'/{target_language}/')
+            # If the new link exists, return it
             if requests.get(new_url).status_code == 200:
                 return match.group(1) + new_url + match.group(3)
-            else:
-                # 
-                new_url = url.replace(f'/{original_language}/', '/en/')
-                if requests.get(new_url).status_code == 200:
-                    return match.group(1) + new_url + match.group(3)
-                new_url = match.group(1) + url.replace(f'/{original_language}/', '/') + match.group(3)
-                if requests.get(new_url).status_code == 200:
-                    return match.group(1) + new_url + match.group(3)
-                else:
-                    return match.group(1) + url + match.group(3)
+            # If the new link doesn't exist, try replacing the language with 'en'
+            new_url = url.replace(f'/{original_language}/', '/en/')
+            # If the 'en' link exists, return it
+            if requests.get(new_url).status_code == 200:
+                return match.group(1) + new_url + match.group(3)
+            # If the 'en' link doesn't exist, remove the language from the link
+            new_url = url.replace(f'/{original_language}/', '/')
+            # If the link without language exists, return it
+            if requests.get(new_url).status_code == 200:
+                return match.group(1) + new_url + match.group(3)
+        # If the link is not in the original language, replace the repo name with '.'
+        return match.group(1) + url.replace(f'{os.getenv("REPO_NAME")}/blob/main', '.') + match.group(3)
 
-        else:
-            return match.group(1) + url.replace(f'{os.getenv("REPO_NAME")}/blob/main', '.') + match.group(3)
-
+    # Replace all links in the text
     return re.sub(r'(\[.*?\]\()(.*?)(\))', replacer, text)
 
 def copy_images(text, original_path, target_path):
