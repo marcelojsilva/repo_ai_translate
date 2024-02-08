@@ -102,6 +102,11 @@ def add_translation_link(md_file, target_path, target_language):
                 new_line = line.replace(f'](readme_{language}.md', f'](readme_{target_language}.md')
                 lines[i] = new_line
                 break
+        else:
+            # If no link to a translated readme is found, generate one using OpenAI
+            link_text = translate_text(f"Read this document in {target_language}:", target_language)
+            new_line = f"[{link_text}](readme_{target_language}.md)\n"
+            lines.insert(0, new_line)
         f.seek(0)
         f.writelines(lines)
         f.truncate()
