@@ -1,6 +1,8 @@
 import os
 import requests
 import shutil
+import sys
+import glob
 from openai import OpenAI
 
 def translate_text(text, target_language):
@@ -50,12 +52,22 @@ def translate_file(original_path, target_path, target_language):
     translated_text = translate_text(text, target_language)
     translated_text = replace_links(translated_text, target_language)
     copy_images(translated_text, original_path, target_path)
+    target_path = os.path.join(target_path, os.path.basename(original_path).replace('.md', '_' + target_language + '.md'))
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
     with open(target_path, 'w', encoding='utf-8') as f:
         f.write(translated_text)
 
+def copy_non_md_files(original_path, target_path):
+    files = glob.glob(os.path.join(original_path, '*'))
+    for file in files:
+        if not file.endswith('.md'):
+            shutil.copy(file, target_path)
+
 if __name__ == '__main__':
-    original_path = '../WTF-Solidity/01_HelloWeb3/readme.md'
-    target_path = '../WTF-Solidity/Languages/pt-br/01_HelloWeb3_pt-br/readme.md'
+    original_path = sys.argv[1]
+    target_path = os.path.join(sys.argv[2], 'pt-br')
     target_language = 'pt-br'
-    translate_file(original_path, target_path, target_language)
+    copy_non_md_files(original_path, target_path)
+    md_files = glob.glob(os.path.join(original_path, '*.md'))
+    for md_file in md_files:
+        translate_file(md_file, target_path, target_language)
