@@ -92,6 +92,20 @@ def is_programming_file(filename):
     # Check if the extension is in the list of programming extensions
     return extension in programming_extensions
 
+def add_translation_link(md_file, target_path, target_language):
+    target_file_path = os.path.join(target_path, md_file.replace('.md', '_' + target_language + '.md'))
+    with open(target_file_path, 'r+', encoding='utf-8') as f:
+        lines = f.readlines()
+        for i, line in enumerate(lines[:4]):
+            if '](readme_' in line:
+                language = line.split('](readme_')[1].split('.md')[0]
+                new_line = line.replace(f'](readme_{language}.md', f'](readme_{target_language}.md')
+                lines[i] = new_line
+                break
+        f.seek(0)
+        f.writelines(lines)
+        f.truncate()
+
 def translate_comments(file_path, target_language):
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -117,6 +131,8 @@ if __name__ == '__main__':
     md_files = glob.glob(os.path.join(original_path, '*.md'))
     for md_file in md_files:
         translate_file(md_file, target_path, target_language)
+        if md_file.lower() == 'readme.md':
+            add_translation_link(md_file, target_path, target_language)
 
     programming_files = [file for file in glob.glob(os.path.join(original_path, '**/*'), recursive=True) if is_programming_file(file)]
     for programming_file in programming_files:
