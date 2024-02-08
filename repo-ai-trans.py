@@ -91,6 +91,23 @@ def is_programming_file(filename):
     # Check if the extension is in the list of programming extensions
     return extension in programming_extensions
 
+def translate_comments(file_path, target_language):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+
+    # Regular expression to match comments in the original language
+    comment_regex = re.compile(r'//.*|/\*.*\*/|<!--.*-->|#.*|\'\'\'.*\'\'\'|\"\"\".*\"\"\"')
+
+    for i, line in enumerate(lines):
+        match = comment_regex.search(line)
+        if match:
+            comment = match.group()
+            translated_comment = translate_text(comment, target_language)
+            lines[i] = line.replace(comment, translated_comment)
+
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.writelines(lines)
+
 if __name__ == '__main__':
     target_language = sys.argv[1]
     original_path = sys.argv[2]
@@ -99,3 +116,7 @@ if __name__ == '__main__':
     md_files = glob.glob(os.path.join(original_path, '*.md'))
     for md_file in md_files:
         translate_file(md_file, target_path, target_language)
+
+    programming_files = [file for file in glob.glob(os.path.join(original_path, '**/*'), recursive=True) if is_programming_file(file)]
+    for programming_file in programming_files:
+        translate_comments(programming_file, target_language)
