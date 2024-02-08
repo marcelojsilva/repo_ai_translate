@@ -56,6 +56,6 @@ def translate_file(original_path, target_path, target_language):
 
 if __name__ == '__main__':
     original_path = '../WTF-Solidity/01_HelloWeb3/readme.md'
-    target_path = './WTF-Solidity/Languages/pt-br/01_HelloWeb3_pt-br/readme.md'
+    target_path = '../WTF-Solidity/Languages/pt-br/01_HelloWeb3_pt-br/readme.md'
     target_language = 'pt-br'
     translate_file(original_path, target_path, target_language)
