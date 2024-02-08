@@ -46,7 +46,7 @@ def copy_images(text, original_path, target_path):
         os.makedirs(os.path.dirname(target_image_path), exist_ok=True)
         shutil.copyfile(original_image_path, target_image_path)
 
-def translate_file(original_path, target_path):
+def translate_file(md_file, original_path, target_path):
     with open(original_path, 'r', encoding='utf-8') as f:
         text = f.read()
     translated_text = translate_text(text, target_language)
