@@ -6,20 +6,27 @@ import glob
 from openai import OpenAI
 import re
 
+MAX_TOKENS = 4096
 original_language = os.getenv('ORIGINAL_LANGUAGE')
+
 def translate_text(text, target_language):
+    # Split the text into chunks if it exceeds MAX_TOKENS
+    chunks = [text[i:i+MAX_TOKENS] for i in range(0, len(text), MAX_TOKENS)]
+    translated_chunks = []
     client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-    chat_completion = client.chat.completions.create(
-        messages=[
-            {
-                "role": "user",
-                "content": f"{text}\n\nTranslate the above text to {target_language}:",
-            }
-        ],
-        model="gpt-3.5-turbo",
-    )
+    for chunk in chunks:
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"{chunk}\n\nTranslate the above text to {target_language}:",
+                }
+            ],
+            model="gpt-3.5-turbo",
+        )
+        translated_chunks.append(chat_completion.choices[0].message.content.strip())
     
-    return chat_completion.choices[0].message.content.strip()
+    return ' '.join(translated_chunks)
 
 def replace_links(text, target_language):
     def replacer(match):
