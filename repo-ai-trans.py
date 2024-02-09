@@ -23,6 +23,7 @@ def translate_text(text, target_language):
                 }
             ],
             model="gpt-3.5-turbo",
+            temperature=0,
         )
         translated_chunks.append(chat_completion.choices[0].message.content.strip())
     
