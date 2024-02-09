@@ -10,8 +10,13 @@ MAX_TOKENS = 4096
 original_language = os.getenv('ORIGINAL_LANGUAGE')
 
 def translate_text(text, target_language):
-    # Split the text into chunks if it exceeds MAX_TOKENS
-    chunks = [text[i:i+MAX_TOKENS] for i in range(0, len(text), MAX_TOKENS)]
+    # Split the text into chunks by the previous line feed to MAX_TOKENS
+    chunks = []
+    while len(text) > MAX_TOKENS:
+        pos = text.rfind('\n', 0, MAX_TOKENS)
+        chunks.append(text[:pos])
+        text = text[pos:]
+    chunks.append(text)
     translated_chunks = []
     client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
     for chunk in chunks:
