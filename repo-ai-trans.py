@@ -6,33 +6,21 @@ import glob
 from openai import OpenAI
 import re
 
-MAX_TOKENS = 4096
 original_language = os.getenv('ORIGINAL_LANGUAGE')
-
 def translate_text(text, target_language):
-    # Split the text into chunks by the previous line feed to MAX_TOKENS
-    chunks = []
-    while len(text) > MAX_TOKENS:
-        pos = text.rfind('\n', 0, MAX_TOKENS)
-        chunks.append(text[:pos])
-        text = text[pos:]
-    chunks.append(text)
-    translated_chunks = []
     client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-    for chunk in chunks:
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"{chunk}\n\nTranslate the above text to {target_language}:",
-                }
-            ],
-            model="gpt-3.5-turbo",
-            temperature=0,
-        )
-        translated_chunks.append(chat_completion.choices[0].message.content.strip())
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": f"{text}\n\nTranslate the above text to {target_language}:",
+            }
+        ],
+        model="gpt-3.5-turbo-0125",
+        max_tokens=4096,
+    )
     
-    return ' '.join(translated_chunks)
+    return chat_completion.choices[0].message.content.strip()
 
 def replace_links(text, target_language):
     def replacer(match):
@@ -56,7 +44,7 @@ def replace_links(text, target_language):
                 return match.group(1) + url + match.group(3)
         # If the link is to a file in the repo, replace to relative path
         if f'{os.getenv("REPO_NAME")}/blob/main' in url: 
-            return match.group(1) + url.replace(f'{os.getenv("REPO_NAME")}/blob/main', '.') + match.group(3)
+            return match.group(1) + url.replace(f'{os.getenv("REPO_NAME")}/blob/main', '..').replace('.md', f'_{target_language}.md') + match.group(3)
         else:
             return match.group(1) + url + match.group(3)
 
