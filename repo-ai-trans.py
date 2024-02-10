@@ -6,23 +6,23 @@ import glob
 from openai import OpenAI
 import re
 
-original_language = os.getenv('ORIGINAL_LANGUAGE')
-def translate_text(text, target_language):
+def translate_text(text, prompt):
     client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
     chat_completion = client.chat.completions.create(
         messages=[
             {
                 "role": "user",
-                "content": f"{text}\n\nTranslate the above text to {target_language}:",
+                "content": f"{text}\n\n{prompt}:",
             }
         ],
         model="gpt-3.5-turbo-0125",
         max_tokens=4096,
+        temperature=0,
     )
     
     return chat_completion.choices[0].message.content.strip()
 
-def replace_links(text, target_language):
+def replace_links(text, target_language, original_language):
     def replacer(match):
         url = match.group(2)
         # Check if the link is in the original language
@@ -54,8 +54,9 @@ def replace_links(text, target_language):
 def translate_file(original_file_path, target_file_path, target_language):
     with open(original_file_path, 'r', encoding='utf-8') as f:
         text = f.read()
-    translated_text = translate_text(text, target_language)
-    translated_text = replace_links(translated_text, target_language)
+    prompt = f'Translate the above text to {target_language}'
+    translated_text = translate_text(text, prompt)
+    translated_text = replace_links(translated_text, target_language, original_language)
     os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
     with open(target_file_path, 'w', encoding='utf-8') as f:
         f.write(translated_text)
@@ -69,6 +70,8 @@ def copy_non_md_files(original_path, target_path):
             rel_path = os.path.relpath(file, original_path)
             # Create the same directory structure in the target path
             target_file_path = os.path.join(target_path, rel_path)
+            if os.path.exists(target_file_path):
+                continue
             os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
             shutil.copy(file, target_file_path)
 
@@ -100,7 +103,7 @@ def add_translation_link(target_file_path, target_language):
         f.writelines(lines)
         f.truncate()
 
-def translate_comments(file_path, target_language):
+def translate_comments(file_path, original_language, target_language):
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
@@ -111,16 +114,18 @@ def translate_comments(file_path, target_language):
         match = comment_regex.search(line)
         if match:
             comment = match.group()
-            translated_comment = translate_text(comment, target_language)
-            lines[i] = line.replace(comment, translated_comment)
+            prompt = f'\n\nTranslate the above if the text have some part in {original_language}, if yes, translate the entire text to {target_language}, otherwise, leave it as is (DO NOT INCLUDE ANYTHING BUT THE TRANSLATED TEXT):'
+            translated_comment = translate_text(comment, prompt)
+            lines[i] = line.replace(comment.lstrip(), translated_comment.lstrip())
 
     with open(file_path, 'w', encoding='utf-8') as f:
         f.writelines(lines)
 
 if __name__ == '__main__':
-    target_language = sys.argv[1]
-    original_path = sys.argv[2]
-    target_path = os.path.join(sys.argv[3], target_language)
+    original_language = sys.argv[1]
+    target_language = sys.argv[2]
+    original_path = sys.argv[3]
+    target_path = os.path.join(sys.argv[4], target_language)
     md_files = glob.glob(os.path.join(original_path, '**/*.md'))
     for md_file in md_files:
         relative_path = os.path.relpath(md_file, original_path)
@@ -134,4 +139,4 @@ if __name__ == '__main__':
 
     programming_files = [file for file in glob.glob(os.path.join(target_path, '**/*'), recursive=True) if is_programming_file(file)]
     for programming_file in programming_files:
-        translate_comments(programming_file, target_language)
+        translate_comments(programming_file, original_language, target_language)
