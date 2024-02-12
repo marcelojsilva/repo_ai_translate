@@ -114,8 +114,8 @@ def translate_comments(original_file, target_file, original_language, target_lan
     with open(original_file, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
-    # Regular expression to match comments in the original language
-    comment_regex = re.compile(r'//.*|/\*.*?\*/|<!--.*?-->|#.*|\'\'\'.*?\'\'\'|\"\"\".*?\"\"\"', re.DOTALL)
+    # Regular expression to match comments and common log commands in the original language
+    comment_regex = re.compile(r'//.*|/\*.*?\*/|<!--.*?-->|#.*|\'\'\'.*?\'\'\'|\"\"\".*?\"\"\"|console\.log\(.*\)|print\(.*\)|System\.out\.println\(.*\)', re.DOTALL)
     i = 0
     while i < len(lines):
         comment = ""
