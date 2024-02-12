@@ -108,15 +108,25 @@ def translate_comments(file_path, original_language, target_language):
         lines = f.readlines()
 
     # Regular expression to match comments in the original language
-    comment_regex = re.compile(r'//.*|/\*.*\*/|<!--.*-->|#.*|\'\'\'.*\'\'\'|\"\"\".*\"\"\"')
+    comment_regex = re.compile(r'//.*|/\*.*?\*/|<!--.*?-->|#.*|\'\'\'.*?\'\'\'|\"\"\".*?\"\"\"', re.DOTALL)
 
-    for i, line in enumerate(lines):
-        match = comment_regex.search(line)
+    i = 0
+    while i < len(lines):
+        match = comment_regex.search(lines[i])
         if match:
             comment = match.group()
+            end_line = i
+            # If the comment is a multiline comment, get all lines
+            if comment.startswith('/*') or comment.startswith('"""') or comment.startswith("'''") or comment.startswith('<!--'):
+                while not comment.endswith('*/') and not comment.endswith('"""') and not comment.endswith("'''") and not comment.endswith('-->'):
+                    end_line += 1
+                    comment += lines[end_line]
             prompt = f'\n\nTranslate the above if the text have some part in {original_language}, if yes, translate the entire text to {target_language}, otherwise, leave it as is (DO NOT INCLUDE ANYTHING BUT THE TRANSLATED TEXT, EXCEPT COMMENTS CHARACTERS):'
             translated_comment = translate_text(comment, prompt)
-            lines[i] = line.replace(comment.lstrip(), translated_comment.lstrip())
+            for j in range(i, end_line + 1):
+                lines[j] = lines[j].replace(comment.lstrip(), translated_comment.lstrip())
+            i = end_line
+        i += 1
 
     with open(file_path, 'w', encoding='utf-8') as f:
         f.writelines(lines)
