@@ -114,7 +114,7 @@ def translate_comments(file_path, original_language, target_language):
         match = comment_regex.search(line)
         if match:
             comment = match.group()
-            prompt = f'\n\nTranslate the above if the text have some part in {original_language}, if yes, translate the entire text to {target_language}, otherwise, leave it as is (DO NOT INCLUDE ANYTHING BUT THE TRANSLATED TEXT):'
+            prompt = f'\n\nTranslate the above if the text have some part in {original_language}, if yes, translate the entire text to {target_language}, otherwise, leave it as is (DO NOT INCLUDE ANYTHING BUT THE TRANSLATED TEXT, EXCEPT COMMENTS CHARACTERS):'
             translated_comment = translate_text(comment, prompt)
             lines[i] = line.replace(comment.lstrip(), translated_comment.lstrip())
 
