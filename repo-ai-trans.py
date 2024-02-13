@@ -59,10 +59,10 @@ def replace_links(text, target_language, original_language):
     # Replace all links in the text
     return re.sub(r'(\[.*?\]\()(.*?)(\))', replacer, text)
 
-def translate_file(original_file_path, target_file_path, target_language):
+def translate_file(original_file_path, target_file_path, original_language, target_language):
     with open(original_file_path, 'r', encoding='utf-8') as f:
         text = f.read()
-    prompt = f'Translate text to {target_language}'
+    prompt = f'Translate text to \'{target_language}\'. Don\'t keep anything in \'{original_language}\'.'
     translated_text = translate_text(text, prompt)
     translated_text = replace_links(translated_text, target_language, original_language)
     os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
@@ -81,7 +81,7 @@ def copy_non_translated_files(original_path, target_path):
             target_file_path = os.path.join(target_path, rel_path)
             if os.path.exists(target_file_path):
                 continue
-            os.makedirs(os.path.dirname(file), exist_ok=True)
+            os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
             shutil.copy(file, target_file_path)
 
 def is_programming_file(filename):
@@ -176,7 +176,7 @@ if __name__ == '__main__':
         # Check if the file exists in the target language
         if os.path.exists(target_file_path):
             continue
-        translate_file(md_file, target_file_path, target_language)
+        translate_file(md_file, target_file_path, original_language, target_language)
         md_count += 1
 
     print('Copying non-translated files...')

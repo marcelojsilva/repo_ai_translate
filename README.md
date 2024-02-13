@@ -14,7 +14,7 @@ project/
     └── image1.png
 ```
 
-After running the script with 'pt-br' as the target language, your project will look like this:
+After running the script with 'pt-br', for example, as the target language, your project will look like this:
 
 ```
 project/
@@ -22,11 +22,12 @@ project/
 ├── file2.py
 ├── img/
 │   └── image1.png
-└── pt-br/
-    ├── file1.md
-    ├── file2.py
-    └── img/
-        └── image1.png
+└── languages/
+│   └── pt-br
+        ├── file1.md
+        ├── file2.py
+        └── img/
+            └── image1.png
 ```
 
 ## Setup
@@ -35,12 +36,12 @@ project/
 2. Create a virtual environment: `python3 -m venv venv`
 3. Activate the virtual environment: `source venv/bin/activate` (Linux/Mac) or `venv\Scripts\activate` (Windows)
 4. Install the requirements: `pip install -r requirements.txt`
-5. Copy the `.env_example` file to `.env` and fill in your OpenAI API key and the name of your repository.
+5. Copy the `.env_example` file to `.env` and fill in your OpenAI API key and the URL of repository to translate.
 
 ## Execution
 
 To execute the script, run: `python repo-ai-trans.py <original_language> <target_language> <original_path> <target_path>`
 
-For example: `python repo-ai-trans.py en pt-br ./project ./project/languages`
+For example: `python repo-ai-trans.py zh pt-br ./project ./project/languages`
 
-This will translate all markdown files and comments in programming files from English to Brazilian Portuguese, and place the translated files in the 'languages' folder inside the 'project' folder.
+This will translate all markdown files and comments in programming files from Chinese to Brazilian Portuguese, and place the translated files in the 'languages' folder inside the 'project' folder.
