@@ -45,3 +45,5 @@ To execute the script, run: `python repo-ai-trans.py <original_language> <target
 For example: `python repo-ai-trans.py zh pt-br ./project ./project/languages`
 
 This will translate all markdown files and comments in programming files from Chinese to Brazilian Portuguese, and place the translated files in the 'languages' folder inside the 'project' folder.
+
+To re-translate an updated original file, simply delete the corresponding file in the destination translated folder and run the script again.
