@@ -19,7 +19,7 @@ def translate_text(text, prompt):
                 "content": f"{text}",
             }
         ],
-        model="gpt-3.5-turbo-0125",
+        model="gpt-3.5-turbo-16k",
         max_tokens=4096,
         temperature=0,
         top_p=1,
@@ -132,6 +132,9 @@ def translate_comments(original_file, target_file, original_language, target_lan
         if comment:
             prompt = f'Translate the text if the text has any part in \'{original_language}\', if so, translate the entire text to \'{target_language}\', else keep the original text. (DO NOT INCLUDE ANYTHING OTHER THAN THE TRANSLATED TEXT. LEAVE COMMENTS CHARACTERS, ESCAPE CHARACTERS AND SPACES. DO NOT INCLUDE ANY PART OF THE ROLE SYSTEM CONTENT).'
             translated_comment = translate_text(comment, prompt)
+            # Fix start and end of translated comments
+            if not translated_comment.startswith(('#', '/*', '*/', '//', '"""', "'''", '<!--', '-->')) and not translated_comment.startswith(('console.log(', 'print(', 'System.out.println(')):
+                translated_comment = f'{comment[:2]} {translated_comment}'
             translated_comment_lines = translated_comment.split('\n')
             if not translated_comment.endswith('\n'):
                 translated_comment += '\n'
@@ -162,6 +165,8 @@ if __name__ == '__main__':
     copy_non_md_programming_files(original_path, target_path)
 
     programming_files = [file for file in glob.glob(os.path.join(original_path, '**/*'), recursive=True) if is_programming_file(file)]
+    programming_files = [f for f in programming_files if not f.startswith(os.path.join(original_path, 'Languages'))]
+
     for programming_file in programming_files:
         relative_path = os.path.relpath(programming_file, original_path)
         target_file_path = os.path.join(target_path, relative_path)
