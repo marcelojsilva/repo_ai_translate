@@ -72,7 +72,7 @@ def copy_non_translated_files(original_path, target_path):
     files = glob.glob(os.path.join(original_path, '**/*'), recursive=True)
     files = [f for f in files if not f.startswith(os.path.join(original_path, 'Languages'))]
     for file in files:
-        if not file.endswith('.md') and not os.path.isdir(file) and not is_programming_file(file) and not file.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico')):
+        if not file.endswith('.md') and not os.path.isdir(file) and not is_programming_file(file):
             # Get the relative path difference
             rel_path = os.path.relpath(file, original_path)
             # Create the same directory structure in the target path
