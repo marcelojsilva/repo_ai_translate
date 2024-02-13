@@ -68,11 +68,11 @@ def translate_file(original_file_path, target_file_path, target_language):
         f.write(translated_text)
         f.write("\n\n<!-- This file was translated using AI by repo_ai_translate. For more information, visit https://github.com/marcelojsilva/repo_ai_translate -->")
 
-def copy_non_md_programming_files(original_path, target_path):
+def copy_non_translated_files(original_path, target_path):
     files = glob.glob(os.path.join(original_path, '**/*'), recursive=True)
     files = [f for f in files if not f.startswith(os.path.join(original_path, 'Languages'))]
     for file in files:
-        if not file.endswith('.md') and not os.path.isdir(file) and not is_programming_file(file):
+        if not file.endswith('.md') and not os.path.isdir(file) and not is_programming_file(file) and not file.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico')):
             # Get the relative path difference
             rel_path = os.path.relpath(file, original_path)
             # Create the same directory structure in the target path
@@ -162,7 +162,7 @@ if __name__ == '__main__':
             continue
         translate_file(md_file, target_file_path, target_language)
 
-    copy_non_md_programming_files(original_path, target_path)
+    copy_non_translated_files(original_path, target_path)
 
     programming_files = [file for file in glob.glob(os.path.join(original_path, '**/*'), recursive=True) if is_programming_file(file)]
     programming_files = [f for f in programming_files if not f.startswith(os.path.join(original_path, 'Languages'))]
