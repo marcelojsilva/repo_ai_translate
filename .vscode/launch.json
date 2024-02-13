@@ -6,7 +6,7 @@
     "configurations": [
         {
             "name": "Python: repo-ai-trans.py",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
