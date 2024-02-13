@@ -50,7 +50,9 @@ def replace_links(text, target_language, original_language):
                 return match.group(1) + url + match.group(3)
         # If the link is to a file in the repo, replace to relative path
         if f'{os.getenv("REPO_NAME")}/blob/main' in url: 
-            return match.group(1) + url.replace(f'{os.getenv("REPO_NAME")}/blob/main', '..').replace('.md', f'_{target_language}.md') + match.group(3)
+            return match.group(1) + url.replace(f'{os.getenv("REPO_NAME")}/blob/main', '..') + match.group(3)
+        elif f'{os.getenv("REPO_NAME")}/tree/main' in url: 
+            return match.group(1) + url.replace(f'{os.getenv("REPO_NAME")}/tree/main', '..') + match.group(3)
         else:
             return match.group(1) + url + match.group(3)
 
@@ -92,24 +94,6 @@ def is_programming_file(filename):
     # Check if the extension is in the list of programming extensions
     return extension in programming_extensions
 
-def add_translation_link(target_file_path, target_language):
-    with open(target_file_path, 'r+', encoding='utf-8') as f:
-        lines = f.readlines()
-        for i, line in enumerate(lines[:4]):
-            if '](readme_' in line:
-                language = line.split('](readme_')[1].split('.md')[0]
-                new_line = line.replace(f'](readme_{language}.md', f'](readme_{target_language}.md')
-                lines[i] = new_line
-                break
-        else:
-            # If no link to a translated readme is found, generate one using OpenAI
-            link_text = translate_text(f"Read this document in {target_language}:", f'Translate text to {target_language}')
-            new_line = f"[{link_text}](readme_{target_language}.md)\n"
-            lines.insert(0, new_line)
-        f.seek(0)
-        f.writelines(lines)
-        f.truncate()
-
 def translate_comments(original_file, target_file, original_language, target_language):
     with open(original_file, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -147,23 +131,59 @@ def translate_comments(original_file, target_file, original_language, target_lan
     with open(target_file, 'w', encoding='utf-8') as f:
         f.writelines(lines)
 
+def check_broken_links(path):
+    md_files = glob.glob(os.path.join(path, '**/*.md'), recursive=True)
+    broken_links = []
+    for md_file in md_files:
+        with open(md_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        links = re.findall(r'\[(.*?)\]\((.*?)\)', content)
+        exclude = ['https://twitter.com', 'https://x.com']
+        for link_text, link in links:
+            # check if the link start with exclude list
+            if any(link.startswith(e) for e in exclude):
+                continue
+            
+            if link.startswith('http'):
+                try:
+                    response = requests.get(link, timeout=10)
+                    if response.status_code not in (200, 401, 402, 403):
+                        broken_links.append((md_file, link_text, link, response.status_code))
+                except (requests.ConnectionError, requests.Timeout):
+                    broken_links.append((md_file, link_text, link, 'Connection error'))
+            # Check the link is a valid local file
+            elif link.startswith(('/', '.')):
+                local_file_path = os.path.join(os.path.dirname(md_file), link)
+                if not os.path.exists(local_file_path):
+                    broken_links.append((md_file, link_text, link))
+    return broken_links
 
 if __name__ == '__main__':
     original_language = sys.argv[1]
     target_language = sys.argv[2]
     original_path = sys.argv[3]
     target_path = os.path.join(sys.argv[4], target_language)
+
+    print(f'Starting translation from {original_language} to {target_language} on {target_path}...')
     md_files = glob.glob(os.path.join(original_path, '**/*.md'))
+    md_files.append(os.path.join(original_path, 'README.md'))
+    
+    md_count = 0
+    print('Translating markdown files...')
     for md_file in md_files:
         relative_path = os.path.relpath(md_file, original_path)
-        target_file_path = os.path.join(target_path, relative_path.replace('.md', f'_{target_language}.md'))
+        target_file_path = os.path.join(target_path, relative_path)
         # Check if the file exists in the target language
         if os.path.exists(target_file_path):
             continue
         translate_file(md_file, target_file_path, target_language)
+        md_count += 1
 
+    print('Copying non-translated files...')
     copy_non_translated_files(original_path, target_path)
 
+    program_count = 0
+    print('Translating comments on programming files...')
     programming_files = [file for file in glob.glob(os.path.join(original_path, '**/*'), recursive=True) if is_programming_file(file)]
     programming_files = [f for f in programming_files if not f.startswith(os.path.join(original_path, 'Languages'))]
 
@@ -173,3 +193,11 @@ if __name__ == '__main__':
         if os.path.exists(target_file_path):
             continue
         translate_comments(programming_file, target_file_path, original_language, target_language)
+        program_count += 1
+    
+    broken_links = check_broken_links(os.path.join(target_path, target_language))
+    print('Validating broken links...')
+    for file, link, status in broken_links:
+        print(f'Broken link: {link} in file: {file}, retruned status: {status}')
+
+    print(f'\nTranslation finished. {md_count} markdown files and {program_count} programming files translated.\nTotal broken links: {len(broken_links)}\n\n')
