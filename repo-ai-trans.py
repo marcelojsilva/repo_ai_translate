@@ -7,26 +7,48 @@ from openai import OpenAI
 import re
 
 def translate_text(text, prompt):
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-    chat_completion = client.chat.completions.create(
-        messages=[
-            {
-                "role": "system",
-                "content": f"{prompt}",
-            },
-            {
+    messages = [
+        {
+            "role": "system",
+            "content": f"{prompt}",
+        },
+        {
+            "role": "user",
+            "content": f"{text}. \nWHEN FINISH RESPONSE USE THE STOP SEQUENCE: \n(CONSUMMATUM EST)!",
+        }
+    ]
+    count = 0
+    history = ""
+    while True:
+        client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+        chat_completion = client.chat.completions.create(
+            messages=messages,
+            model="gpt-3.5-turbo-16k",
+            max_tokens=4096,
+            temperature=0,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+        count += 1
+        content = chat_completion.choices[0].message.content.strip()
+        if content.split('\n')[-1] == "(CONSUMMATUM EST)!" or count > 2:
+            break
+        history += content
+        if count == 2:
+            # remove last two messages
+            messages.pop()
+            messages.pop()
+
+        messages.append({
+                "role": "assistant",
+                "content": f"{content}",
+            })
+        messages.append({
                 "role": "user",
-                "content": f"{text}",
-            }
-        ],
-        model="gpt-3.5-turbo-16k",
-        max_tokens=4096,
-        temperature=0,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0
-    )
-    return chat_completion.choices[0].message.content.strip()
+                "content": f"If not finished, continue exactly from {content.split()[-1]}, else use the stop sequence: \n(CONSUMMATUM EST)!",
+            })
+    return history 
 
 def replace_links(text, target_language, original_language):
     def replacer(match):
@@ -62,7 +84,7 @@ def replace_links(text, target_language, original_language):
 def translate_file(original_file_path, target_file_path, original_language, target_language):
     with open(original_file_path, 'r', encoding='utf-8') as f:
         text = f.read()
-    prompt = f'Translate text to \'{target_language}\'. Don\'t keep anything in \'{original_language}\'.'
+    prompt = f'Translate the text above to \'{target_language}\'. Don\'t keep anything in \'{original_language}\'.'
     translated_text = translate_text(text, prompt)
     translated_text = replace_links(translated_text, target_language, original_language)
     os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
