@@ -223,4 +223,8 @@ if __name__ == '__main__':
     for file, link, status in broken_links:
         print(f'Broken link: {link} in file: {file}, retruned status: {status}')
 
-    print(f'\nTranslation finished. {md_count} markdown files and {program_count} programming files translated.\nTotal broken links: {len(broken_links)}\n\n')
+    print(f'\nTranslation finished. {md_count} markdown files and {program_count} programming files translated.\nTotal broken links: {len(broken_links)}\n\n')def get_file_size(file_path):
+    """
+    This function returns the size of a file in KB.
+    """
+    return os.path.getsize(file_path) / 1024
