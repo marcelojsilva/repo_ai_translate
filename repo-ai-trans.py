@@ -181,6 +181,9 @@ def check_broken_links(path):
                     broken_links.append((md_file, link_text, link))
     return broken_links
 
+def get_file_size(file_path):
+    return os.path.getsize(file_path) / 1024
+
 if __name__ == '__main__':
     original_language = sys.argv[1]
     target_language = sys.argv[2]
@@ -234,12 +237,3 @@ if __name__ == '__main__':
             print(f'Size difference more than 10%: {md_file} (original: {original_size}KB, translated: {target_size}KB, difference: {size_difference}%)')
 
     print(f'\nTranslation finished. {md_count} markdown files and {program_count} programming files translated.\nTotal broken links: {len(broken_links)}\n\n')
-    """
-    This function returns the size of a file in KB.
-    """
-    return os.path.getsize(file_path) / 1024
-def get_file_size(file_path):
-    """
-    This function returns the size of a file in KB.
-    """
-    return os.path.getsize(file_path) / 1024
