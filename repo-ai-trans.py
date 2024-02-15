@@ -223,7 +223,22 @@ if __name__ == '__main__':
     for file, link, status in broken_links:
         print(f'Broken link: {link} in file: {file}, retruned status: {status}')
 
-    print(f'\nTranslation finished. {md_count} markdown files and {program_count} programming files translated.\nTotal broken links: {len(broken_links)}\n\n')def get_file_size(file_path):
+    print('Checking size difference of original and translated Markdown files...')
+    for md_file in md_files:
+        relative_path = os.path.relpath(md_file, original_path)
+        target_file_path = os.path.join(target_path, relative_path)
+        original_size = get_file_size(md_file)
+        target_size = get_file_size(target_file_path)
+        size_difference = abs(original_size - target_size) / original_size * 100
+        if size_difference > 10:
+            print(f'Size difference more than 10%: {md_file} (original: {original_size}KB, translated: {target_size}KB, difference: {size_difference}%)')
+
+    print(f'\nTranslation finished. {md_count} markdown files and {program_count} programming files translated.\nTotal broken links: {len(broken_links)}\n\n')
+    """
+    This function returns the size of a file in KB.
+    """
+    return os.path.getsize(file_path) / 1024
+def get_file_size(file_path):
     """
     This function returns the size of a file in KB.
     """
