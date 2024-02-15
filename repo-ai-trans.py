@@ -181,8 +181,10 @@ def check_broken_links(path):
                     broken_links.append((md_file, link_text, link))
     return broken_links
 
-def get_file_size(file_path):
-    return os.path.getsize(file_path) / 1024
+def get_file_lines(file_path):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+    return len(lines)
 
 if __name__ == '__main__':
     original_language = sys.argv[1]
@@ -226,14 +228,14 @@ if __name__ == '__main__':
     for file, link, status in broken_links:
         print(f'Broken link: {link} in file: {file}, retruned status: {status}')
 
-    print('Checking size difference of original and translated Markdown files...')
+    print('Checking line difference of original and translated Markdown files...')
     for md_file in md_files:
         relative_path = os.path.relpath(md_file, original_path)
         target_file_path = os.path.join(target_path, relative_path)
-        original_size = get_file_size(md_file)
-        target_size = get_file_size(target_file_path)
-        size_difference = abs(original_size - target_size) / original_size * 100
-        if size_difference > 10:
-            print(f'Size difference more than 10%: {md_file} (original: {original_size}KB, translated: {target_size}KB, difference: {size_difference}%)')
+        original_lines = get_file_lines(md_file)
+        target_lines = get_file_lines(target_file_path)
+        line_difference = abs(original_lines - target_lines) / original_lines * 100
+        if line_difference > 10:
+            print(f'Line difference more than 10%: {md_file} (original: {original_lines} lines, translated: {target_lines} lines, difference: {line_difference}%)')
 
     print(f'\nTranslation finished. {md_count} markdown files and {program_count} programming files translated.\nTotal broken links: {len(broken_links)}\n\n')
