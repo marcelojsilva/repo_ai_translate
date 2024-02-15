@@ -6,6 +6,8 @@ import glob
 from openai import OpenAI
 import re
 
+MAX_TOKENS = 4096
+
 def translate_text(text, prompt):
     messages = [
         {
@@ -14,7 +16,7 @@ def translate_text(text, prompt):
         },
         {
             "role": "user",
-            "content": f"{text}. \nWHEN FINISH RESPONSE USE THE STOP SEQUENCE: \n(CONSUMMATUM EST)!",
+            "content": f"{text}.",
         }
     ]
     count = 0
@@ -24,7 +26,7 @@ def translate_text(text, prompt):
         chat_completion = client.chat.completions.create(
             messages=messages,
             model="gpt-3.5-turbo-16k",
-            max_tokens=4096,
+            max_tokens=MAX_TOKENS,
             temperature=0,
             top_p=1,
             frequency_penalty=0,
@@ -32,21 +34,20 @@ def translate_text(text, prompt):
         )
         count += 1
         content = chat_completion.choices[0].message.content.strip()
-        if content.split('\n')[-1] == "(CONSUMMATUM EST)!" or count > 2:
+        if chat_completion.usage.completion_tokens < MAX_TOKENS or count == 2:
+            history += content
             break
-        history += content
-        if count == 2:
-            # remove last two messages
-            messages.pop()
-            messages.pop()
 
+        last_sentence = content.splitlines()[-1:]
+        content_without_last_sentence, _, _ = content.rpartition(last_sentence[0])
+        history += content_without_last_sentence
         messages.append({
                 "role": "assistant",
                 "content": f"{content}",
             })
         messages.append({
                 "role": "user",
-                "content": f"If not finished, continue exactly from {content.split()[-1]}, else use the stop sequence: \n(CONSUMMATUM EST)!",
+                "content": f"Continue replace from {last_sentence}"
             })
     return history 
 
