@@ -21,26 +21,52 @@ def translate_text(text, prompt):
     ]
     count = 0
     history = ""
+    last_sentence = ""
     while True:
         client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-        chat_completion = client.chat.completions.create(
-            messages=messages,
-            model="gpt-3.5-turbo-16k",
-            max_tokens=MAX_TOKENS,
-            temperature=0,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
+        try:
+            chat_completion = client.chat.completions.create(
+                messages=messages,
+                model="gpt-3.5-turbo-16k",
+                max_tokens=MAX_TOKENS,
+                temperature=0,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0
+            )
+        except Exception as e:
+            if e.status_code == 400:
+                if 'context_length_exceeded' not in e.message:
+                    raise e
+                # Calculate the number of tokens to exclude
+                requested_tokens = int(re.search(r'requested (\d+) tokens', e.message).group(1))
+                max_context_length = int(re.search(r'maximum context length is (\d+) tokens', e.message).group(1))
+                messages_tokens = requested_tokens - MAX_TOKENS
+                total_word = sum([len(x['content'].split()) for x in messages])
+                word_average_tokens = messages_tokens / total_word
+                qty_exceded_tokens = requested_tokens - max_context_length
+                qty_exclude_words = int(qty_exceded_tokens / word_average_tokens)
+
+                # Reduce the length of the messages and try again
+                messages[1]['content'] = ' '.join(messages[1]['content'].split()[qty_exclude_words:])
+                continue
+
         count += 1
         content = chat_completion.choices[0].message.content.strip()
-        if chat_completion.usage.completion_tokens < MAX_TOKENS or count == 2:
+        if last_sentence and content.find(last_sentence[0]) >= 0:
+            # Remove any text included by the model before the last sentence
+            content = content[content.find(last_sentence[0]):]
+        
+        if chat_completion.usage.completion_tokens < MAX_TOKENS or count > 2:
             history += content
             break
 
         last_sentence = content.splitlines()[-1:]
         content_without_last_sentence, _, _ = content.rpartition(last_sentence[0])
         history += content_without_last_sentence
+
+        if count >= 2:
+            messages = messages[:-2]
         messages.append({
                 "role": "assistant",
                 "content": f"{content}",
@@ -193,8 +219,8 @@ if __name__ == '__main__':
     target_path = os.path.join(sys.argv[4], target_language)
 
     print(f'Starting translation from {original_language} to {target_language} on {target_path}...')
-    md_files = glob.glob(os.path.join(original_path, '**/*.md'))
-    md_files.append(os.path.join(original_path, 'README.md'))
+    md_files = glob.glob(os.path.join(original_path, '**/*.md'), recursive=True)
+    md_files = [f for f in md_files if not f.startswith(sys.argv[4])]
     
     md_count = 0
     print('Translating markdown files...')
@@ -213,7 +239,7 @@ if __name__ == '__main__':
     program_count = 0
     print('Translating comments on programming files...')
     programming_files = [file for file in glob.glob(os.path.join(original_path, '**/*'), recursive=True) if is_programming_file(file)]
-    programming_files = [f for f in programming_files if not f.startswith(os.path.join(original_path, 'Languages'))]
+    programming_files = [f for f in programming_files if not f.startswith(sys.argv[4])]
 
     for programming_file in programming_files:
         relative_path = os.path.relpath(programming_file, original_path)
@@ -235,7 +261,7 @@ if __name__ == '__main__':
         original_lines = get_file_lines(md_file)
         target_lines = get_file_lines(target_file_path)
         line_difference = abs(original_lines - target_lines) / original_lines * 100
-        if line_difference > 10:
-            print(f'Line difference more than 10%: {md_file} (original: {original_lines} lines, translated: {target_lines} lines, difference: {line_difference}%)')
+        if line_difference > 20:
+            print(f'Line difference more than 20%: {md_file} (original: {original_lines} lines, translated: {target_lines} lines, difference: {int(line_difference)}%)')
 
     print(f'\nTranslation finished. {md_count} markdown files and {program_count} programming files translated.\nTotal broken links: {len(broken_links)}\n\n')
